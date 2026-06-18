@@ -1,3 +1,5 @@
-export * from "./products";
-export * from "./bills";
+export * from "./generated/api";
+export * from "./generated/api.schemas";
+export { setBaseUrl, setAuthTokenGetter } from "./custom-fetch";
+export type { AuthTokenGetter } from "./custom-fetch";
 //# sourceMappingURL=index.d.ts.map
