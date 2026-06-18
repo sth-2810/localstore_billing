@@ -1,0 +1,349 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification for Shop Billing System
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: products
+    description: Product catalog operations
+  - name: bills
+    description: Bill management operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List all products
+      responses:
+        "200":
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Create or update a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /products/barcode/{barcode}:
+    get:
+      operationId: getProductByBarcode
+      tags: [products]
+      summary: Look up product by barcode
+      parameters:
+        - name: barcode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Product found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /products/{id}:
+    patch:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductUpdate"
+      responses:
+        "200":
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Delete a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /bills:
+    get:
+      operationId: listBills
+      tags: [bills]
+      summary: List all saved bills
+      responses:
+        "200":
+          description: List of bills
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bill"
+    post:
+      operationId: createBill
+      tags: [bills]
+      summary: Save a new bill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BillInput"
+      responses:
+        "201":
+          description: Bill saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bill"
+
+  /bills/stats:
+    get:
+      operationId: getBillStats
+      tags: [bills]
+      summary: Get billing statistics (total bills, revenue today, total revenue)
+      responses:
+        "200":
+          description: Stats summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillStats"
+
+  /bills/{id}:
+    get:
+      operationId: getBill
+      tags: [bills]
+      summary: Get a single bill
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Bill details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bill"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteBill
+      tags: [bills]
+      summary: Delete a bill
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    Product:
+      type: object
+      required: [id, name, sellingPrice, mrp, unitType, createdAt]
+      properties:
+        id:
+          type: integer
+        barcode:
+          type: ["string", "null"]
+        name:
+          type: string
+        purchasePrice:
+          type: ["number", "null"]
+        sellingPrice:
+          type: number
+        mrp:
+          type: number
+        unitType:
+          type: string
+          enum: [PCS, Kg, Gram]
+        createdAt:
+          type: string
+
+    ProductInput:
+      type: object
+      required: [name, sellingPrice, mrp, unitType]
+      properties:
+        barcode:
+          type: string
+        name:
+          type: string
+        purchasePrice:
+          type: number
+        sellingPrice:
+          type: number
+        mrp:
+          type: number
+        unitType:
+          type: string
+          enum: [PCS, Kg, Gram]
+
+    ProductUpdate:
+      type: object
+      properties:
+        barcode:
+          type: string
+        name:
+          type: string
+        purchasePrice:
+          type: number
+        sellingPrice:
+          type: number
+        mrp:
+          type: number
+        unitType:
+          type: string
+          enum: [PCS, Kg, Gram]
+
+    BillItem:
+      type: object
+      required: [productName, quantity, unitType, sellingPrice, total]
+      properties:
+        productName:
+          type: string
+        barcode:
+          type: ["string", "null"]
+        quantity:
+          type: number
+        unitType:
+          type: string
+        sellingPrice:
+          type: number
+        total:
+          type: number
+
+    Bill:
+      type: object
+      required: [id, billNumber, date, items, grandTotal, createdAt]
+      properties:
+        id:
+          type: integer
+        billNumber:
+          type: integer
+        date:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/BillItem"
+        grandTotal:
+          type: number
+        createdAt:
+          type: string
+
+    BillInput:
+      type: object
+      required: [items, grandTotal]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/BillItem"
+        grandTotal:
+          type: number
+
+    BillStats:
+      type: object
+      required: [totalBills, totalRevenue, todayRevenue, todayBills]
+      properties:
+        totalBills:
+          type: integer
+        totalRevenue:
+          type: number
+        todayRevenue:
+          type: number
+        todayBills:
+          type: integer
