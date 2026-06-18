@@ -1,0 +1,1 @@
+{"version":3,"file":"billItem.d.ts","sourceRoot":"","sources":["../../../src/generated/types/billItem.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AAEH,MAAM,WAAW,QAAQ;IACvB,WAAW,EAAE,MAAM,CAAC;IACpB,gBAAgB;IAChB,OAAO,CAAC,EAAE,MAAM,GAAG,IAAI,CAAC;IACxB,QAAQ,EAAE,MAAM,CAAC;IACjB,QAAQ,EAAE,MAAM,CAAC;IACjB,YAAY,EAAE,MAAM,CAAC;IACrB,KAAK,EAAE,MAAM,CAAC;CACf"}
