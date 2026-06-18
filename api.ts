@@ -5,857 +5,179 @@
  * API specification for Shop Billing System
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
-import type {
-  MutationFunction,
-  QueryFunction,
-  QueryKey,
-  UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult
-} from '@tanstack/react-query';
+import * as zod from 'zod';
 
-import type {
-  Bill,
-  BillInput,
-  BillStats,
-  ErrorResponse,
-  HealthStatus,
-  Product,
-  ProductInput,
-  ProductUpdate
-} from './api.schemas';
-
-import { customFetch } from '../custom-fetch';
-import type { ErrorType , BodyType } from '../custom-fetch';
-
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-      type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
-
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
-
-export const getHealthCheckUrl = () => {
-
-
-
-
-  return `/api/healthz`
-}
 
 /**
  * Returns server health status
  * @summary Health check
  */
-export const healthCheck = async ( options?: RequestInit): Promise<HealthStatus> => {
-
-  return customFetch<HealthStatus>(getHealthCheckUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getHealthCheckQueryKey = () => {
-    return [
-    `/api/healthz`
-    ] as const;
-    }
-
-
-export const getHealthCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getHealthCheckQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof healthCheck>>> = ({ signal }) => healthCheck({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type HealthCheckQueryResult = NonNullable<Awaited<ReturnType<typeof healthCheck>>>
-export type HealthCheckQueryError = ErrorType<unknown>
-
-
-/**
- * @summary Health check
- */
-
-export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getHealthCheckQueryOptions(options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-
-export const getListProductsUrl = () => {
-
-
-
-
-  return `/api/products`
-}
-
-/**
- * @summary List all products
- */
-export const listProducts = async ( options?: RequestInit): Promise<Product[]> => {
-
-  return customFetch<Product[]>(getListProductsUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getListProductsQueryKey = () => {
-    return [
-    `/api/products`
-    ] as const;
-    }
-
-
-export const getListProductsQueryOptions = <TData = Awaited<ReturnType<typeof listProducts>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listProducts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getListProductsQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProducts>>> = ({ signal }) => listProducts({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProducts>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type ListProductsQueryResult = NonNullable<Awaited<ReturnType<typeof listProducts>>>
-export type ListProductsQueryError = ErrorType<unknown>
+export const HealthCheckResponse = zod.object({
+  "status": zod.string()
+})
 
 
 /**
  * @summary List all products
  */
+export const ListProductsResponseItem = zod.object({
+  "id": zod.number(),
+  "barcode": zod.string().nullish(),
+  "name": zod.string(),
+  "purchasePrice": zod.number().nullish(),
+  "sellingPrice": zod.number(),
+  "mrp": zod.number(),
+  "unitType": zod.enum(['PCS', 'Kg', 'Gram']),
+  "createdAt": zod.string()
+})
+export const ListProductsResponse = zod.array(ListProductsResponseItem)
 
-export function useListProducts<TData = Awaited<ReturnType<typeof listProducts>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listProducts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getListProductsQueryOptions(options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-
-export const getCreateProductUrl = () => {
-
-
-
-
-  return `/api/products`
-}
 
 /**
  * @summary Create or update a product
  */
-export const createProduct = async (productInput: ProductInput, options?: RequestInit): Promise<Product> => {
-
-  return customFetch<Product>(getCreateProductUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      productInput,)
-  }
-);}
-
-
-
-
-export const getCreateProductMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProduct>>, TError,{data: BodyType<ProductInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createProduct>>, TError,{data: BodyType<ProductInput>}, TContext> => {
-
-const mutationKey = ['createProduct'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createProduct>>, {data: BodyType<ProductInput>}> = (props) => {
-          const {data} = props ?? {};
-
-          return  createProduct(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateProductMutationResult = NonNullable<Awaited<ReturnType<typeof createProduct>>>
-    export type CreateProductMutationBody = BodyType<ProductInput>
-    export type CreateProductMutationError = ErrorType<unknown>
-
-    /**
- * @summary Create or update a product
- */
-export const useCreateProduct = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProduct>>, TError,{data: BodyType<ProductInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof createProduct>>,
-        TError,
-        {data: BodyType<ProductInput>},
-        TContext
-      > => {
-      return useMutation(getCreateProductMutationOptions(options));
-    }
-
-export const getGetProductByBarcodeUrl = (barcode: string,) => {
-
-
-
-
-  return `/api/products/barcode/${barcode}`
-}
-
-/**
- * @summary Look up product by barcode
- */
-export const getProductByBarcode = async (barcode: string, options?: RequestInit): Promise<Product> => {
-
-  return customFetch<Product>(getGetProductByBarcodeUrl(barcode),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetProductByBarcodeQueryKey = (barcode: string,) => {
-    return [
-    `/api/products/barcode/${barcode}`
-    ] as const;
-    }
-
-
-export const getGetProductByBarcodeQueryOptions = <TData = Awaited<ReturnType<typeof getProductByBarcode>>, TError = ErrorType<ErrorResponse>>(barcode: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProductByBarcode>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetProductByBarcodeQueryKey(barcode);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProductByBarcode>>> = ({ signal }) => getProductByBarcode(barcode, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: !!(barcode), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProductByBarcode>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetProductByBarcodeQueryResult = NonNullable<Awaited<ReturnType<typeof getProductByBarcode>>>
-export type GetProductByBarcodeQueryError = ErrorType<ErrorResponse>
+export const CreateProductBody = zod.object({
+  "barcode": zod.string().optional(),
+  "name": zod.string(),
+  "purchasePrice": zod.number().optional(),
+  "sellingPrice": zod.number(),
+  "mrp": zod.number(),
+  "unitType": zod.enum(['PCS', 'Kg', 'Gram'])
+})
 
 
 /**
  * @summary Look up product by barcode
  */
+export const GetProductByBarcodeParams = zod.object({
+  "barcode": zod.coerce.string()
+})
 
-export function useGetProductByBarcode<TData = Awaited<ReturnType<typeof getProductByBarcode>>, TError = ErrorType<ErrorResponse>>(
- barcode: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProductByBarcode>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const GetProductByBarcodeResponse = zod.object({
+  "id": zod.number(),
+  "barcode": zod.string().nullish(),
+  "name": zod.string(),
+  "purchasePrice": zod.number().nullish(),
+  "sellingPrice": zod.number(),
+  "mrp": zod.number(),
+  "unitType": zod.enum(['PCS', 'Kg', 'Gram']),
+  "createdAt": zod.string()
+})
 
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetProductByBarcodeQueryOptions(barcode,options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-
-export const getUpdateProductUrl = (id: number,) => {
-
-
-
-
-  return `/api/products/${id}`
-}
 
 /**
  * @summary Update a product
  */
-export const updateProduct = async (id: number,
-    productUpdate: ProductUpdate, options?: RequestInit): Promise<Product> => {
+export const UpdateProductParams = zod.object({
+  "id": zod.coerce.number()
+})
 
-  return customFetch<Product>(getUpdateProductUrl(id),
-  {
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      productUpdate,)
-  }
-);}
+export const UpdateProductBody = zod.object({
+  "barcode": zod.string().optional(),
+  "name": zod.string().optional(),
+  "purchasePrice": zod.number().optional(),
+  "sellingPrice": zod.number().optional(),
+  "mrp": zod.number().optional(),
+  "unitType": zod.enum(['PCS', 'Kg', 'Gram']).optional()
+})
 
+export const UpdateProductResponse = zod.object({
+  "id": zod.number(),
+  "barcode": zod.string().nullish(),
+  "name": zod.string(),
+  "purchasePrice": zod.number().nullish(),
+  "sellingPrice": zod.number(),
+  "mrp": zod.number(),
+  "unitType": zod.enum(['PCS', 'Kg', 'Gram']),
+  "createdAt": zod.string()
+})
 
-
-
-export const getUpdateProductMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProduct>>, TError,{id: number;data: BodyType<ProductUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateProduct>>, TError,{id: number;data: BodyType<ProductUpdate>}, TContext> => {
-
-const mutationKey = ['updateProduct'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProduct>>, {id: number;data: BodyType<ProductUpdate>}> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  updateProduct(id,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateProductMutationResult = NonNullable<Awaited<ReturnType<typeof updateProduct>>>
-    export type UpdateProductMutationBody = BodyType<ProductUpdate>
-    export type UpdateProductMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Update a product
- */
-export const useUpdateProduct = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProduct>>, TError,{id: number;data: BodyType<ProductUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof updateProduct>>,
-        TError,
-        {id: number;data: BodyType<ProductUpdate>},
-        TContext
-      > => {
-      return useMutation(getUpdateProductMutationOptions(options));
-    }
-
-export const getDeleteProductUrl = (id: number,) => {
-
-
-
-
-  return `/api/products/${id}`
-}
 
 /**
  * @summary Delete a product
  */
-export const deleteProduct = async (id: number, options?: RequestInit): Promise<void> => {
-
-  return customFetch<void>(getDeleteProductUrl(id),
-  {
-    ...options,
-    method: 'DELETE'
-
-
-  }
-);}
-
-
-
-
-export const getDeleteProductMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProduct>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteProduct>>, TError,{id: number}, TContext> => {
-
-const mutationKey = ['deleteProduct'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteProduct>>, {id: number}> = (props) => {
-          const {id} = props ?? {};
-
-          return  deleteProduct(id,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeleteProductMutationResult = NonNullable<Awaited<ReturnType<typeof deleteProduct>>>
-
-    export type DeleteProductMutationError = ErrorType<unknown>
-
-    /**
- * @summary Delete a product
- */
-export const useDeleteProduct = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProduct>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof deleteProduct>>,
-        TError,
-        {id: number},
-        TContext
-      > => {
-      return useMutation(getDeleteProductMutationOptions(options));
-    }
-
-export const getListBillsUrl = () => {
-
-
-
-
-  return `/api/bills`
-}
-
-/**
- * @summary List all saved bills
- */
-export const listBills = async ( options?: RequestInit): Promise<Bill[]> => {
-
-  return customFetch<Bill[]>(getListBillsUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getListBillsQueryKey = () => {
-    return [
-    `/api/bills`
-    ] as const;
-    }
-
-
-export const getListBillsQueryOptions = <TData = Awaited<ReturnType<typeof listBills>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listBills>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getListBillsQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listBills>>> = ({ signal }) => listBills({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listBills>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type ListBillsQueryResult = NonNullable<Awaited<ReturnType<typeof listBills>>>
-export type ListBillsQueryError = ErrorType<unknown>
+export const DeleteProductParams = zod.object({
+  "id": zod.coerce.number()
+})
 
 
 /**
  * @summary List all saved bills
  */
+export const ListBillsResponseItem = zod.object({
+  "id": zod.number(),
+  "billNumber": zod.number(),
+  "date": zod.string(),
+  "items": zod.array(zod.object({
+  "productName": zod.string(),
+  "barcode": zod.string().nullish(),
+  "quantity": zod.number(),
+  "unitType": zod.string(),
+  "sellingPrice": zod.number(),
+  "total": zod.number()
+})),
+  "grandTotal": zod.number(),
+  "createdAt": zod.string()
+})
+export const ListBillsResponse = zod.array(ListBillsResponseItem)
 
-export function useListBills<TData = Awaited<ReturnType<typeof listBills>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listBills>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getListBillsQueryOptions(options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-
-export const getCreateBillUrl = () => {
-
-
-
-
-  return `/api/bills`
-}
 
 /**
  * @summary Save a new bill
  */
-export const createBill = async (billInput: BillInput, options?: RequestInit): Promise<Bill> => {
-
-  return customFetch<Bill>(getCreateBillUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      billInput,)
-  }
-);}
-
-
-
-
-export const getCreateBillMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBill>>, TError,{data: BodyType<BillInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof createBill>>, TError,{data: BodyType<BillInput>}, TContext> => {
-
-const mutationKey = ['createBill'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createBill>>, {data: BodyType<BillInput>}> = (props) => {
-          const {data} = props ?? {};
-
-          return  createBill(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateBillMutationResult = NonNullable<Awaited<ReturnType<typeof createBill>>>
-    export type CreateBillMutationBody = BodyType<BillInput>
-    export type CreateBillMutationError = ErrorType<unknown>
-
-    /**
- * @summary Save a new bill
- */
-export const useCreateBill = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBill>>, TError,{data: BodyType<BillInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof createBill>>,
-        TError,
-        {data: BodyType<BillInput>},
-        TContext
-      > => {
-      return useMutation(getCreateBillMutationOptions(options));
-    }
-
-export const getGetBillStatsUrl = () => {
-
-
-
-
-  return `/api/bills/stats`
-}
-
-/**
- * @summary Get billing statistics (total bills, revenue today, total revenue)
- */
-export const getBillStats = async ( options?: RequestInit): Promise<BillStats> => {
-
-  return customFetch<BillStats>(getGetBillStatsUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetBillStatsQueryKey = () => {
-    return [
-    `/api/bills/stats`
-    ] as const;
-    }
-
-
-export const getGetBillStatsQueryOptions = <TData = Awaited<ReturnType<typeof getBillStats>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBillStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetBillStatsQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBillStats>>> = ({ signal }) => getBillStats({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBillStats>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetBillStatsQueryResult = NonNullable<Awaited<ReturnType<typeof getBillStats>>>
-export type GetBillStatsQueryError = ErrorType<unknown>
+export const CreateBillBody = zod.object({
+  "items": zod.array(zod.object({
+  "productName": zod.string(),
+  "barcode": zod.string().nullish(),
+  "quantity": zod.number(),
+  "unitType": zod.string(),
+  "sellingPrice": zod.number(),
+  "total": zod.number()
+})),
+  "grandTotal": zod.number()
+})
 
 
 /**
  * @summary Get billing statistics (total bills, revenue today, total revenue)
  */
-
-export function useGetBillStats<TData = Awaited<ReturnType<typeof getBillStats>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBillStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetBillStatsQueryOptions(options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-
-export const getGetBillUrl = (id: number,) => {
-
-
-
-
-  return `/api/bills/${id}`
-}
-
-/**
- * @summary Get a single bill
- */
-export const getBill = async (id: number, options?: RequestInit): Promise<Bill> => {
-
-  return customFetch<Bill>(getGetBillUrl(id),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetBillQueryKey = (id: number,) => {
-    return [
-    `/api/bills/${id}`
-    ] as const;
-    }
-
-
-export const getGetBillQueryOptions = <TData = Awaited<ReturnType<typeof getBill>>, TError = ErrorType<ErrorResponse>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBill>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetBillQueryKey(id);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBill>>> = ({ signal }) => getBill(id, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBill>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetBillQueryResult = NonNullable<Awaited<ReturnType<typeof getBill>>>
-export type GetBillQueryError = ErrorType<ErrorResponse>
+export const GetBillStatsResponse = zod.object({
+  "totalBills": zod.number(),
+  "totalRevenue": zod.number(),
+  "todayRevenue": zod.number(),
+  "todayBills": zod.number()
+})
 
 
 /**
  * @summary Get a single bill
  */
+export const GetBillParams = zod.object({
+  "id": zod.coerce.number()
+})
 
-export function useGetBill<TData = Awaited<ReturnType<typeof getBill>>, TError = ErrorType<ErrorResponse>>(
- id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBill>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const GetBillResponse = zod.object({
+  "id": zod.number(),
+  "billNumber": zod.number(),
+  "date": zod.string(),
+  "items": zod.array(zod.object({
+  "productName": zod.string(),
+  "barcode": zod.string().nullish(),
+  "quantity": zod.number(),
+  "unitType": zod.string(),
+  "sellingPrice": zod.number(),
+  "total": zod.number()
+})),
+  "grandTotal": zod.number(),
+  "createdAt": zod.string()
+})
 
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetBillQueryOptions(id,options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-
-export const getDeleteBillUrl = (id: number,) => {
-
-
-
-
-  return `/api/bills/${id}`
-}
 
 /**
  * @summary Delete a bill
  */
-export const deleteBill = async (id: number, options?: RequestInit): Promise<void> => {
+export const DeleteBillParams = zod.object({
+  "id": zod.coerce.number()
+})
 
-  return customFetch<void>(getDeleteBillUrl(id),
-  {
-    ...options,
-    method: 'DELETE'
-
-
-  }
-);}
-
-
-
-
-export const getDeleteBillMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBill>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteBill>>, TError,{id: number}, TContext> => {
-
-const mutationKey = ['deleteBill'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteBill>>, {id: number}> = (props) => {
-          const {id} = props ?? {};
-
-          return  deleteBill(id,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeleteBillMutationResult = NonNullable<Awaited<ReturnType<typeof deleteBill>>>
-
-    export type DeleteBillMutationError = ErrorType<unknown>
-
-    /**
- * @summary Delete a bill
- */
-export const useDeleteBill = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBill>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof deleteBill>>,
-        TError,
-        {id: number},
-        TContext
-      > => {
-      return useMutation(getDeleteBillMutationOptions(options));
-    }
 
